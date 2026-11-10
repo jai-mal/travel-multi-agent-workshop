@@ -54,7 +54,7 @@ def initialize_cosmos_client():
     """Initialize the Cosmos DB client and all containers"""
     global cosmos_client, database
     global sessions_container, messages_container
-    global api_events_container, debug_logs_container, places_container, trips_container, users_container
+    global api_events_container, debug_logs_container, optimization_turns_container, places_container, trips_container, users_container
     
     if cosmos_client is None:
         try:
