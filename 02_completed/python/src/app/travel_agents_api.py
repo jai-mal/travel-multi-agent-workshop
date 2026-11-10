@@ -58,6 +58,7 @@ from src.app.services.azure_cosmos_db import (
     create_user, get_all_users, get_user_by_id, update_user_preferences,
     store_debug_log, get_debug_log, query_debug_logs
 )
+from src.app.services.tool_call_repair import interrupted_tool_results
 from src.app.travel_agents import (
     setup_agents,
     build_agent_graph,
@@ -1430,13 +1431,20 @@ async def chat_event_generator(
     }
 
     base_config = _thread_config(tenant_id, user_id, thread_id)
-    checkpoint_history = trim_history(await _load_checkpoint_history(base_config))
+    saved_history = await _load_checkpoint_history(base_config)
+    checkpoint_history = trim_history(saved_history)
     traveller_context, pref_vector = await _fetch_current_traveller_context(
         client,
         tenant_id,
         user_id,
     )
     messages: list[Any] = list(checkpoint_history)
+    # A run cut off mid-tool leaves its tool request unanswered in the saved history.
+    # Close it here, or every later message in this chat fails.
+    repaired = interrupted_tool_results(saved_history)
+    if repaired:
+        logger.warning("closing %d interrupted tool call(s) in session %s", len(repaired), thread_id)
+    messages.extend(repaired)
     messages.append(HumanMessage(content=user_message))
     active_trip, traveller_context = await _resolve_active_trip_context(
         tenant_id,
