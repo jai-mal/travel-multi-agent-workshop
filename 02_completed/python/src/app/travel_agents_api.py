@@ -58,7 +58,7 @@ from src.app.services.azure_cosmos_db import (
     create_user, get_all_users, get_user_by_id, update_user_preferences,
     store_debug_log, get_debug_log, query_debug_logs
 )
-from src.app.services.tool_call_repair import interrupted_tool_results
+from src.app.services.tool_call_repair import interrupted_tool_removals
 from src.app.travel_agents import (
     setup_agents,
     build_agent_graph,
@@ -642,6 +642,16 @@ async def _load_checkpoint_history(config: dict) -> list:
     if not checkpoints:
         return []
     return _extract_checkpoint_messages(checkpoints[-1])
+
+
+async def _latest_state_messages(workflow: Any, config: dict) -> list[Any]:
+    """Messages in the newest saved state of the thread, as the graph will see them."""
+    try:
+        snapshot = await workflow.aget_state(config)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("could not read latest thread state: %s", exc)
+        return []
+    return list((snapshot.values or {}).get("messages", []))
 
 
 async def _fetch_current_traveller_context(
@@ -1431,20 +1441,13 @@ async def chat_event_generator(
     }
 
     base_config = _thread_config(tenant_id, user_id, thread_id)
-    saved_history = await _load_checkpoint_history(base_config)
-    checkpoint_history = trim_history(saved_history)
+    checkpoint_history = trim_history(await _load_checkpoint_history(base_config))
     traveller_context, pref_vector = await _fetch_current_traveller_context(
         client,
         tenant_id,
         user_id,
     )
     messages: list[Any] = list(checkpoint_history)
-    # A run cut off mid-tool leaves its tool request unanswered in the saved history.
-    # Close it here, or every later message in this chat fails.
-    repaired = interrupted_tool_results(saved_history)
-    if repaired:
-        logger.warning("closing %d interrupted tool call(s) in session %s", len(repaired), thread_id)
-    messages.extend(repaired)
     messages.append(HumanMessage(content=user_message))
     active_trip, traveller_context = await _resolve_active_trip_context(
         tenant_id,
@@ -1484,13 +1487,19 @@ async def chat_event_generator(
         memory_type="turn",
     )
 
+    # A run cut off mid-tool leaves its tool request with no result in the saved state.
+    # Remove that request, or every message in this chat fails the history check.
+    repairs = interrupted_tool_removals(await _latest_state_messages(workflow, base_config))
+    if repairs:
+        logger.warning("removing %d interrupted tool request(s) in session %s", len(repairs), thread_id)
+
     accumulated: list[str] = []
     last_output_text = ""
     token = _current_user_preference_vector.set(pref_vector)
     try:
         with use_traveller_context(traveller_context):
             async for event in workflow.astream_events(
-                {"messages": messages},
+                {"messages": [*repairs, *messages]},
                 config=config,
                 version="v2",
             ):
