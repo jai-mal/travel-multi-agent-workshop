@@ -39,7 +39,9 @@ describe('LoginComponent', () => {
     ]);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
 
-    mockTravelApiService.getUsers.and.returnValue(of(mockUsers));
+    mockTravelApiService.getUsers.and.callFake((tenantId?: string) =>
+      of(tenantId === 'analytics' ? [] : mockUsers)
+    );
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent, FormsModule],
@@ -62,6 +64,27 @@ describe('LoginComponent', () => {
     expect(mockTravelApiService.getUsers).toHaveBeenCalled();
     expect(component.users).toEqual(mockUsers);
     expect(component.isLoading).toBeFalse();
+  });
+
+  it('should list Analytics users after Marvel users', () => {
+    const analyticsUser: User = {
+      id: 'sam_carter',
+      userId: 'sam_carter',
+      tenantId: 'analytics',
+      name: 'Sam Carter',
+      email: 'sam.carter@example.com',
+      createdAt: '2026-11-10T00:00:00Z'
+    };
+    mockTravelApiService.getUsers.and.callFake((tenantId?: string) =>
+      of(tenantId === 'analytics' ? [analyticsUser] : mockUsers)
+    );
+
+    const loginComponent = TestBed.createComponent(LoginComponent).componentInstance;
+    loginComponent.ngOnInit();
+
+    expect(mockTravelApiService.getUsers).toHaveBeenCalledWith('marvel');
+    expect(mockTravelApiService.getUsers).toHaveBeenCalledWith('analytics');
+    expect(loginComponent.users).toEqual([...mockUsers, analyticsUser]);
   });
 
   it('should handle error when loading users', () => {

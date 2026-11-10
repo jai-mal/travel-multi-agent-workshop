@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TravelApiService } from '../../services/travel-api.service';
 import { User } from '../../models/travel.models';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-login',
@@ -47,9 +49,13 @@ export class LoginComponent implements OnInit {
 
   loadUsers(): void {
     this.isLoading = true;
-    this.travelApiService.getUsers().subscribe({
-      next: (users) => {
-        this.users = users;
+    // Marvel and Analytics profiles are listed together. A failed Analytics load must not block Marvel sign-in.
+    forkJoin([
+      this.travelApiService.getUsers('marvel'),
+      this.travelApiService.getUsers('analytics').pipe(catchError(() => of([] as User[])))
+    ]).subscribe({
+      next: ([marvelUsers, analyticsUsers]) => {
+        this.users = [...marvelUsers, ...analyticsUsers];
         this.isLoading = false;
       },
       error: (error) => {
