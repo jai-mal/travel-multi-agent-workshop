@@ -35,6 +35,7 @@ sessions_container = None
 messages_container = None
 api_events_container = None
 debug_logs_container = None
+optimization_turns_container = None
 places_container = None
 trips_container = None
 users_container = None
@@ -75,6 +76,7 @@ def initialize_cosmos_client():
             messages_container = database.get_container_client("Messages")
             api_events_container = database.get_container_client("ApiEvents")
             debug_logs_container = database.get_container_client("Debug")
+            optimization_turns_container = database.get_container_client("OptimizationTurns")
             places_container = database.get_container_client("Places")
             trips_container = database.get_container_client("Trips")
             users_container = database.get_container_client("Users")
@@ -1274,6 +1276,13 @@ def record_api_event(
 # ============================================================================
 # Debug Logs
 # ============================================================================
+
+def store_optimization_turn(doc: Dict[str, Any]) -> None:
+    """Write one captured turn to OptimizationTurns, the table the Fabric mirror reads."""
+    if optimization_turns_container is None:
+        raise RuntimeError("OptimizationTurns container is not configured")
+    optimization_turns_container.upsert_item(doc)
+
 
 def store_debug_log(
     session_id: str,

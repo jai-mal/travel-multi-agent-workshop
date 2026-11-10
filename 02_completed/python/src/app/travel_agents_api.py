@@ -56,9 +56,10 @@ from src.app.services.azure_cosmos_db import (
     query_places_with_theme, query_places_filtered,
     patch_active_agent, update_session_activity,
     create_user, get_all_users, get_user_by_id, update_user_preferences,
-    store_debug_log, get_debug_log, query_debug_logs
+    store_debug_log, get_debug_log, query_debug_logs, store_optimization_turn
 )
 from src.app.services.tool_call_repair import interrupted_tool_removals
+from src.app.services.optimization_turn_doc import build_optimization_turn_doc
 from src.app.travel_agents import (
     setup_agents,
     build_agent_graph,
@@ -609,6 +610,25 @@ def _persist_turn_debug_log(
         )
     except Exception as exc:  # noqa: BLE001
         logger.error(f"❌ Failed to store turn debug log for session {thread_id}: {exc}")
+
+    try:
+        turn_doc = build_optimization_turn_doc(
+            turn_id=debug_log_id,
+            tenant_id=tenant_id,
+            user_id=user_id,
+            session_id=thread_id,
+            complexity_tier=dbg.get("complexity_tier"),
+            model_deployment=dbg.get("model_deployment"),
+            model_name=dbg.get("model_name"),
+            input_tokens=dbg.get("input_tokens"),
+            output_tokens=dbg.get("output_tokens"),
+            cached_tokens=dbg.get("cached_tokens"),
+            handoff_count=handoff_count,
+            agent_path=agent_path,
+        )
+        store_optimization_turn(turn_doc)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("optimization turn capture failed for session %s: %s", thread_id, exc)
 
 
 def _extract_checkpoint_messages(checkpoint: Any) -> list:
