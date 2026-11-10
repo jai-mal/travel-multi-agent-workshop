@@ -101,8 +101,8 @@ Use this mode only when you intend to execute the controlled transition:
 5. Recompute the baseline snapshot.
 6. Wait for mirror convergence and verify the SQL endpoint.
 7. Refresh Power BI.
-8. Apply the Analytics model-selection recommendation.
-9. Generate the approved Analytics controlled burst.
+8. Apply the After model-selection recommendation.
+9. Generate the approved After controlled burst.
 10. Validate source rows, recompute, wait for the mirror, and refresh Power BI.
 
 Run these steps serially. Do not use **Freshen Turn Times**.
@@ -117,22 +117,22 @@ action was separately rehearsed.
 
 After Reset and before controlled traffic:
 
-- Marvel: 200 all-premium turns; **Not Applied · Before**.
-- Analytics: 200 all-premium turns; **Not Applied · Before**.
+- Before side: 200 all-premium turns; **Not Applied · Before**.
+- After side: 200 all-premium turns; **Not Applied · Before**.
 - Both cohorts: 20 populated minute buckets; funnel `192 → 184 → 92 → 56`; conversion `29.2%`;
   largest cause `city_friction`.
 - Normal user trips outside fixture ownership remain available.
 
 After Apply but before new traffic:
 
-- Analytics: **Policy Active · Awaiting Traffic · Before**.
+- After side: **Policy Active · Awaiting Traffic · Before**.
 
-After the controlled Analytics burst and explicit Recompute:
+After the controlled burst on the After side and explicit Recompute:
 
-- Marvel remains **Not Applied · Before**.
-- Analytics has 400 turns total: 270 premium, 110 mini, and 20 nano; **Applied · After**.
+- Before side remains **Not Applied · Before**.
+- After side has 400 turns total: 270 premium, 110 mini, and 20 nano; **Applied · After**.
 
-The Analytics result is **Measured**. Recommendation-card and volume values are **Projected** or
+The After result is **Measured**. Recommendation-card and volume values are **Projected** or
 **Estimated**. Revert changes future routing and preserves captured After data.
 
 Missing, incomplete, duplicate, conflicting, malformed-token, unknown-deployment, or

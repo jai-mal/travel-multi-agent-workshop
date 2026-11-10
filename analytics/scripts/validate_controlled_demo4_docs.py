@@ -26,7 +26,7 @@ SEQUENCES = {
         (
             "controlled Reset",
             "direct Cosmos baseline",
-            "Apply the Analytics",
+            "Apply the After",
             "Generate",
             "recompute",
             "refresh Power BI",
@@ -37,7 +37,7 @@ SEQUENCES = {
         (
             "Reset to baseline",
             "direct Cosmos baseline",
-            "Select the Analytics",
+            "Select the After",
             "Apply",
             "Generate traffic",
             "Recompute insights",
@@ -138,7 +138,7 @@ def main() -> None:
     )
     documented_time_profile = (
         "20 populated minute buckets",
-        "200 Analytics turns across 20 minutes",
+        "200 After turns across 20 minutes",
         "20 nano, 110 mini, and 70 premium",
     )
     require_group(

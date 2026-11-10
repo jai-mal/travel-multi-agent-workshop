@@ -206,7 +206,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); background: transp
   <div class="cfg">
     <label>Dataset</label>
     <select id="tenant">
-      <option>marvel</option><option>analytics</option>
+      <option value="marvel">Before</option><option value="analytics">After</option>
     </select>
     <label>Source</label>
     <select id="source" title="Reverse-ETL reads the OptimizationInsights snapshot produced by the analytics notebook (Module 09); Live recomputes from the raw captured turns">
@@ -220,7 +220,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); background: transp
       <div id="toolsMenu" class="toolsmenu" hidden>
         <div class="toolshdr">Demo tools</div>
         <button id="generateTraffic" class="toolitem" hidden>Generate traffic
-          <span>Add the deterministic Analytics after-burst — 200 turns over 20 minutes, tiered nano/mini/premium.</span>
+          <span>Add the deterministic After-side burst — 200 turns over 20 minutes, tiered nano/mini/premium.</span>
         </button>
         <button id="recomputeInsights" class="toolitem" hidden>Recompute insights
           <span>Rebuild the Business / Memory / Governance snapshot in-process — no Fabric needed.</span>
@@ -363,6 +363,8 @@ function resolveApi() {
 }
 const api = () => resolveApi();
 const tenant = () => ($("tenant").value || "marvel").trim();
+const TENANT_LABEL = { marvel: "Before", analytics: "After" };
+const tenantLabel = () => TENANT_LABEL[tenant()] || tenant();
 const src = () => ($("source") && $("source").value) || "auto";
 const PALETTE = ["#4f8cff", "#6ee7b7", "#f6c453", "#ff6b6b", "#57d9a3", "#b98cff", "#4dd0e1", "#ffa726"];
 
@@ -592,7 +594,7 @@ function renderScorecard() {
   const el = $("scorecard"), e = state.scorecard;
   if (!e || e.error) { el.innerHTML = unavail(e ? e.status : 0); return; }
   const agents = (e.data.agents || []);
-  if (!agents.length) { el.innerHTML = `<div class="empty">No node-grain scorecard rows for <b>${esc(tenant())}</b>. Capture per-agent executions (Module 07) or pick a seeded dataset.</div>`; return; }
+  if (!agents.length) { el.innerHTML = `<div class="empty">No node-grain scorecard rows for <b>${esc(tenantLabel())}</b>. Capture per-agent executions (Module 07) or pick a seeded dataset.</div>`; return; }
   const head = `<tr><th>Agent</th>${DIMS.map((d) => `<th>${esc(titleize(d))}</th>`).join("")}</tr>`;
   const cspan = 1 + DIMS.length;
   const rows = agents.map((a) => {
@@ -656,7 +658,7 @@ function renderOpps() {
   const el = $("opps"), e = state.opps;
   if (!e || e.error) { el.innerHTML = unavail(e ? e.status : 0); return; }
   const d = e.data, opps = (d.opportunities || []).slice().sort((a, b) => (b.saving || 0) - (a.saving || 0));
-  if (!opps.length) { el.innerHTML = `<div class="empty">No optimizations detected for <b>${esc(tenant())}</b>.</div>`; return; }
+  if (!opps.length) { el.innerHTML = `<div class="empty">No optimizations detected for <b>${esc(tenantLabel())}</b>.</div>`; return; }
   const rows = opps.map((o) => `<tr>
     <td class="strong">${esc(o.agent)}</td><td>${esc(o.dimension)}</td>
     <td><span class="mono">${esc(o.seam)}</span> → ${esc(o.target)}</td>
@@ -853,7 +855,7 @@ function renderRecs() {
   const el = $("recs"), e = state.recs;
   if (!e || e.error) { el.innerHTML = unavail(e ? e.status : 0); return; }
   const recs = (e.data.recommendations || []);
-  if (!recs.length) { el.innerHTML = `<div class="empty">No recommendations for <b>${esc(tenant())}</b> yet.</div>`; return; }
+  if (!recs.length) { el.innerHTML = `<div class="empty">No recommendations for <b>${esc(tenantLabel())}</b> yet.</div>`; return; }
   el.innerHTML = recs.map((r) => {
     const desc = r.rationale || r.note || "", caveat = r.estimate_caveat || r.caveat || "", facts = cardEvidence(r);
     const mopp = manualOppFor(r);
@@ -966,7 +968,7 @@ function renderPolicies() {
   const el = $("policies"), e = state.policies;
   if (!e || e.error) { el.innerHTML = unavail(e ? e.status : 0); return; }
   const pols = visibleActivePolicies();
-  if (!pols.length) { el.innerHTML = `<div class="empty">No active policies for <b>${esc(tenant())}</b>.</div>`; return; }
+  if (!pols.length) { el.innerHTML = `<div class="empty">No active policies for <b>${esc(tenantLabel())}</b>.</div>`; return; }
   const rows = pols.map((p) => `<tr><td class="strong">${esc(p.title || p.scenario)}</td><td>${badge(p.status)}</td>
     <td class="num">v${esc(p.version != null ? p.version : "—")}</td><td>${esc(p.proposed_by || "—")}</td>
     <td>${esc(p.updated_at ? new Date(p.updated_at).toLocaleDateString() : "—")}</td></tr>`).join("");
@@ -995,7 +997,7 @@ function renderResult() {
   if (!e || e.error) { el.innerHTML = unavail(e ? e.status : 0); return; }
   if (!resultDatasetValid()) { el.innerHTML = resultDatasetError(); return; }
   const rows = tenantMeasuredResults();
-  if (!rows.length) { el.innerHTML = `<div class="empty">No measured result for <b>${esc(tenant())}</b>.</div>`; return; }
+  if (!rows.length) { el.innerHTML = `<div class="empty">No measured result for <b>${esc(tenantLabel())}</b>.</div>`; return; }
   el.innerHTML = `<table><thead><tr><th>Optimization</th><th>Method</th><th class="num">Baseline</th><th class="num">Actual</th><th class="num">Saving</th><th class="num">%</th></tr></thead><tbody>${rows.map((r) => {
     const measured = r.measurement_status === "measured";
     return `<tr>
@@ -1036,7 +1038,7 @@ function renderTimeline() {
   const el = $("turnsTimeline"), e = state.timeline;
   if (!e || e.error) { el.innerHTML = unavail(e ? e.status : 0); return; }
   const buckets = (e.data.buckets || []);
-  if (!buckets.length) { el.innerHTML = `<div class="empty">No turn timestamps for <b>${esc(tenant())}</b>.</div>`; return; }
+  if (!buckets.length) { el.innerHTML = `<div class="empty">No turn timestamps for <b>${esc(tenantLabel())}</b>.</div>`; return; }
   el.innerHTML = timelineChartSVG(buckets) + `<div class="pill-note">${fmtInt(e.data.total_turns)} turns across ${buckets.length} one-minute bucket(s) — the captured-run window, computed live from raw turn timestamps.</div>`;
 }
 
@@ -1066,8 +1068,8 @@ function updateEmptyNote() {
   } else if (noData) {
     el.className = "analytics-note";
     el.innerHTML = (src() === "auto")
-      ? `<b>No notebook snapshot yet for “${esc(tenant())}”.</b> The <b>Reverse-ETL (notebook)</b> source reads what the <b>Module 09</b> analytics notebook writes — run it first. To see live activity now, drive some traffic (<b>Modules 07–08</b>) and switch <b>Source → Live (recompute)</b>.`
-      : `<b>No telemetry yet for “${esc(tenant())}”.</b> This portal reads live agent activity — drive some traffic through the travel app (<b>Modules 07–08</b>) to populate it, then <b>Refresh</b>.`;
+      ? `<b>No notebook snapshot yet for “${esc(tenantLabel())}”.</b> The <b>Reverse-ETL (notebook)</b> source reads what the <b>Module 09</b> analytics notebook writes — run it first. To see live activity now, drive some traffic (<b>Modules 07–08</b>) and switch <b>Source → Live (recompute)</b>.`
+      : `<b>No telemetry yet for “${esc(tenantLabel())}”.</b> This portal reads live agent activity — drive some traffic through the travel app (<b>Modules 07–08</b>) to populate it, then <b>Refresh</b>.`;
     el.hidden = false;
   } else {
     el.hidden = true;
@@ -1229,7 +1231,7 @@ async function generateTraffic() {
     let mode = "", n = ""; try { const j = JSON.parse(txt); if (j.mode) mode = j.mode; if (j.generated != null) n = ` · ${j.generated} turns`; } catch (e) {}
     if ($("source")) $("source").value = "live";
     const hint = (mode === "tiered" || mode === "controlled") ? "Model mix is now tiered (nano/mini/premium)." : "Baseline single model — apply model-selection, then generate again to see tiering.";
-    toast(`Generated Analytics traffic${n} (${mode}). ${hint} Watch the Model Selection tab.`);
+    toast(`Generated After traffic${n} (${mode}). ${hint} Watch the Model Selection tab.`);
     await refresh();
   } catch (e) {
     toast(`Generate failed: ${e.message}`, true); setStatus("err", "generate failed");

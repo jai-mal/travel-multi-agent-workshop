@@ -51,21 +51,23 @@ navigation state do not collide.
 ## Demo setup — complete before presenting
 
 Complete every step in this section before starting **Demo 1**. The audience-facing demo begins
-only after Analytics has its second 200-turn burst, recompute and mirroring have completed, Power
+only after the After side has its second 200-turn burst, recompute and mirroring have completed, Power
 BI has been refreshed, and all readiness checks pass.
 
 ## Recommended pre-demo state
 
-The supplied demo guide moves from **Marvel** to **Analytics** to show the before and after of
+Labels: **Before** = tenant `marvel`; **After** = tenant `analytics`. Tenant IDs in the data are unchanged; the portal dropdown shows the labels.
+
+The supplied demo guide moves from **Before** to **After** to show the before and after of
 model-selection optimization. Prepare the complete comparison before the audience arrives:
 
-- **Marvel = Before:** model-selection is not applied, all 200 controlled turns use the premium
+- **Before:** model-selection is not applied, all 200 controlled turns use the premium
   model, and no measured result exists.
-- **Analytics = After:** reset first creates the same 200-turn premium baseline, then
+- **After:** reset first creates the same 200-turn premium baseline, then
   model-selection is applied and the traffic generator adds a second 200-turn optimized burst.
-  Analytics is ready with 400 controlled turns and a measured result.
+  The After side is ready with 400 controlled turns and a measured result.
 
-Do not apply model-selection to Marvel while preparing this demo. Marvel is the unchanged
+Do not apply model-selection to Before while preparing this demo. Before is the unchanged
 comparison dataset.
 
 ### Exact preparation sequence
@@ -73,7 +75,7 @@ comparison dataset.
 Perform these steps in the **web analytics portal**. Wait for each operation to finish and refresh
 successfully before starting the next one.
 
-1. Open the portal and confirm **Tenant = Analytics**.
+1. Open the portal and confirm **Dataset = After**.
 2. Open **Demo tools** using the gear button.
 3. Select **Reset to baseline**, read the confirmation, and confirm the reset.
 4. Wait for the success message. If reset reports an error, stop; do not generate traffic or
@@ -81,14 +83,14 @@ successfully before starting the next one.
 5. Select **Recompute insights**. This creates the baseline analytical snapshot for both controlled
    tenants.
 6. Verify the baseline:
-   - Marvel: 200 premium turns, model-selection not applied, no measured result.
-   - Analytics: 200 premium turns, model-selection not applied, no measured result.
-7. With **Tenant = Analytics**, open **Optimizations**, select the capability-tiered
+   - Before side: 200 premium turns, model-selection not applied, no measured result.
+   - After side: 200 premium turns, model-selection not applied, no measured result.
+7. With **Dataset = After**, open **Optimizations**, select the capability-tiered
    model-selection recommendation, and select **Apply**.
-8. Verify the Analytics policy state is **Active**, **Applied**, or **Awaiting Traffic**. Marvel
+8. Verify the After policy state is **Active**, **Applied**, or **Awaiting Traffic**. The Before side
    must remain **Not Applied**.
 9. Open **Demo tools** and select **Generate traffic** exactly once. This control always generates
-   the deterministic Analytics after-burst; it does not generate Marvel traffic.
+   the deterministic After-side burst; it does not generate Before traffic.
 10. Wait for the success message reporting **200 turns** and a tiered model mix.
 11. Open **Demo tools** and select **Recompute insights** exactly once.
 12. Wait for recompute to finish, then allow the Fabric mirror to converge.
@@ -100,7 +102,7 @@ controlled before/after comparison.
 
 ### Timing guidance
 
-The traffic generator creates 200 logical Analytics turns across six controlled containers, which
+The traffic generator creates 200 logical After turns across six controlled containers, which
 is approximately 1,200 document upserts. The operation does not have a fixed duration guarantee;
 Cosmos throughput, retry backoff, recompute time, and Fabric mirror convergence can all vary.
 
@@ -111,7 +113,7 @@ The demo is ready only when the readiness checks pass, regardless of elapsed tim
 ### What Reset to baseline changes
 
 Reset creates a backup before mutation, reverts the tenant-qualified model-selection policies for
-both Marvel and Analytics, removes only controlled-fixture rows, and reseeds the canonical
+both Before and After, removes only controlled-fixture rows, and reseeds the canonical
 two-tenant baseline.
 
 The controlled fixture spans these containers:
@@ -142,18 +144,18 @@ After reset:
 
 ### What Generate traffic changes
 
-During setup, the portal's controlled **Generate traffic** action requires the Analytics
-model-selection policy to be active. It replaces only the named Analytics after-burst namespace
+During setup, the portal's controlled **Generate traffic** action requires the After side
+model-selection policy to be active. It replaces only the named After-side burst namespace
 across the same six controlled cohort containers.
 
-One successful run adds exactly 200 Analytics turns over 20 minutes:
+One successful run adds exactly 200 After turns over 20 minutes:
 
 - 70 premium (`gpt-5.1`)
 - 110 mini (`gpt-5-mini`)
 - 20 nano (`gpt-5-nano`)
 
 The burst is deterministic and safe to retry with the same parameters: an existing matching burst
-is replaced, not appended repeatedly. Conflicting burst parameters fail closed. Marvel is not
+is replaced, not appended repeatedly. Conflicting burst parameters fail closed. Before is not
 changed.
 
 ### What Recompute insights changes
@@ -171,7 +173,7 @@ first, then recompute, then wait for the mirror, and only then refresh Power BI.
    Cosmos account/database, Fabric workspace, mirror, notebook, User Data Function, semantic model,
    and report.
 2. Stop any practice traffic generator or notebook refresh.
-3. Capture a durable backup of every fixture-owned Marvel and Analytics row that controlled reset
+3. Capture a durable backup of every fixture-owned Before and After row that controlled reset
    may mutate, plus the current policy documents and deployed Fabric/Power BI definitions.
 4. Record the active Container Apps revisions, images, and traffic weights.
 5. Verify the backup is readable before mutation. If identity, inventory, or backup verification
@@ -188,8 +190,8 @@ the web analytics portal.
 
 1. In the web analytics portal, run **Reset to baseline** for the approved controlled fixture.
 2. Validate the direct Cosmos baseline before recomputing derived rows:
-   - Marvel: 200 all-premium turns, no applied model-selection policy, Before state.
-   - Analytics: 200 all-premium turns, no applied model-selection policy, Before state.
+   - Before side: 200 all-premium turns, no applied model-selection policy, Before state.
+   - After side: 200 all-premium turns, no applied model-selection policy, Before state.
    - Each cohort has 20 populated minute buckets and funnel `192 → 184 → 92 → 56`.
    - Conversion is `29.2%`; `city_friction` is the largest cause.
    - Operational user trips outside fixture ownership remain present.
@@ -207,18 +209,18 @@ Use this sequence only while rehearsing or rebuilding the prepared state before 
 Do not run it during the audience-facing demo. The Power BI presentation uses the already prepared
 state from [Exact preparation sequence](#exact-preparation-sequence).
 
-1. Select the Analytics demonstration dataset and Apply the model-selection recommendation.
+1. Select the After dataset and Apply the model-selection recommendation.
 2. Verify the state is **Policy Active · Awaiting Traffic · Before**.
-3. Run **Generate traffic** once. The controlled burst adds 200 Analytics turns across 20 minutes:
+3. Run **Generate traffic** once. The controlled burst adds 200 After turns across 20 minutes:
    20 nano, 110 mini, and 70 premium.
 4. Validate the direct Cosmos rows and model mix.
 5. Run **Recompute insights** once.
 6. Wait for mirror convergence and verify through the SQL analytics endpoint.
 7. Refresh Power BI and compare:
-   - Marvel remains **Not Applied · Before**.
-   - Analytics is **Applied · After**, with 400 turns total and model mix 270 premium, 110 mini,
+   - The Before side remains **Not Applied · Before**.
+   - The After side is **Applied · After**, with 400 turns total and model mix 270 premium, 110 mini,
      and 20 nano.
-8. Treat the controlled Analytics saving as **Measured**. Recommendation-card and volume values
+8. Treat the controlled After saving as **Measured**. Recommendation-card and volume values
    remain **Projected** or **Estimated**.
 
 Revert changes future behavior; it does not erase already captured After traffic.
@@ -227,7 +229,7 @@ Revert changes future behavior; it does not erase already captured After traffic
 
 Do not begin the presentation until all of these checks pass:
 
-| Check | Marvel Before | Analytics After |
+| Check | Before | After |
 |---|---:|---:|
 | Controlled turns | 200 | 400 |
 | Premium turns | 200 | 270 |
@@ -241,7 +243,7 @@ Do not begin the presentation until all of these checks pass:
 
 Also verify:
 
-- the Marvel and Analytics tenant slicers each remove the other tenant's ranked row;
+- the Before and After tenant slicers each remove the other tenant's ranked row;
 - the recommendation cards remain below the ranked opportunity feed as a separate list;
 - the planned Barcelona trip and other protected operational trips still exist;
 - `OptimizationInsights` has refreshed rows and the mirror is no longer catching up;
@@ -368,7 +370,7 @@ Also verify:
 
 ### Power BI sequence and talk track
 
-1. Set the Power BI tenant slicer to **Marvel** before the audience sees the report.
+1. Set the Power BI tenant slicer to **`marvel`** (Before) before the audience sees the report. The slicer shows raw IDs until Power BI is relabeled.
 2. Open **Portfolio Overview**. Show turns, cost, cache behavior, confirmed trips, cost per
    outcome, optimization counts, and the model distribution.
 3. Point out the **Before** state:
@@ -378,16 +380,16 @@ Also verify:
    - estimated saving and the ranked model-selection opportunity are visible.
 4. Open **Optimizations**. Show the ranked opportunity, its projected saving, the separate
    recommendation cards, and the Apply/Revert controls. In Prepared mode, describe **Apply** but do
-   not select it; Marvel must remain the Before comparison.
-5. Change the tenant slicer from **Marvel** to **Analytics**.
+   not select it; Before must remain the comparison.
+5. Change the tenant slicer from **`marvel`** (Before) to **`analytics`** (After).
 6. Return to **Portfolio Overview** and show the prepared **After** state:
    - active policies is `1`;
    - measured saving is `2.8005`;
    - the model distribution includes premium, mini, and nano;
    - the optimized dataset contains 400 controlled turns.
 7. Open **Optimizations** again. Show that the ranked opportunity is **Active / Applied**, that
-   exactly one Analytics row appears, and that its measured and projected values belong to
-   Analytics.
+   exactly one After row appears, and that its measured and projected values belong to
+   After.
 8. Explain that Power BI is an observation and scoped policy-writeback surface. It does not own
    reset, controlled traffic, or recomputation.
 9. A missing measurement is **Not measured yet** or blank; `$0.00` means a real completed
@@ -395,11 +397,11 @@ Also verify:
 
 ### Web analytics portal sequence and talk track
 
-Start with **Tenant = Analytics** and **Source = Reverse-ETL (notebook)** so the portal shows the
+Start with **Dataset = After** and **Source = Reverse-ETL (notebook)** so the portal shows the
 same prepared After snapshot as Power BI.
 
 1. **Overview:** portfolio metrics, optimization band, model mix, and turn timeline. Call out the
-   active Analytics policy and tiered model mix.
+   active After policy and tiered model mix.
 2. **Optimizations:** ranked opportunities and reversible governed actions.
 3. **Model Selection:** serving-model mix, actual versus baseline cost, complexity tiers, and
    projected volume scenarios.
